@@ -1,0 +1,330 @@
+(HTML)
+<body>
+  <div id="start-screen" style="text-align:center; color: white;">
+    <h1>Jogo da Memória</h1>
+    <button id="start-button" style="padding: 10px 20px; font-size: 1.2rem; cursor: pointer;">Começar Jogo</button>
+  </div>
+
+  <div class="game-container" style="display:none;">
+    <h1> Jogo da Memória</h1>body {
+  font-family: Arial, sans-serif;
+  background: #222;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.game-container {
+  text-align: center;
+  max-width: 800px;
+  width: 100%;
+}
+
+.info {
+  margin: 10px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
+  justify-content: center;
+}
+
+#restart {
+  padding: 5px 10px;
+  background: #444;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.grid {
+  display: grid;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.card {
+  width: 80px;
+  height: 80px;
+  background: #888;
+  font-size: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 8px;
+  user-select: none;
+  transition: transform 0.3s;
+}
+
+.card.flipped {
+  background: #fff;
+  color: #000;
+  cursor: default;
+}
+
+.card.matched {
+  background: #4caf50;
+  color: white;
+}
+.card img {
+  max-width: 100%;
+  max-height: 100%;
+  display: none;
+}
+
+.card.flipped img,
+.card.matched img {
+  display: block;
+}
+    
+    <div class="info">
+      <label for="level">Dificuldade:</label>
+      <select id="level">
+        <option value="easy">Fácil (4x4)</option>
+        <option value="medium">Médio (6x4)</option>
+        <option value="hard">Difícil (6x6)</option>
+      </select>
+      
+      <span>⏱ Tempo: <span id="timer">00:00</span></span>
+      <span>🎯 Movimentos: <span id="moves">0</span></span>
+      <button id="restart">🔄 Reiniciar</button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+
+(CSS)
+body {
+  font-family: Arial, sans-serif;
+  background: #222;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.game-container {
+  text-align: center;
+  max-width: 800px;
+  width: 100%;
+}
+
+.info {
+  margin: 10px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
+  justify-content: center;
+}
+
+#restart {
+  padding: 5px 10px;
+  background: #444;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.grid {
+  display: grid;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.card {
+  width: 80px;
+  height: 80px;
+  background: #888;
+  font-size: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 8px;
+  user-select: none;
+  transition: transform 0.3s;
+}
+
+.card.flipped {
+  background: #fff;
+  color: #000;
+  cursor: default;
+}
+
+.card.matched {
+  background: #4caf50;
+  color: white;
+}
+.card img {
+  max-width: 100%;
+  max-height: 100%;
+  display: none;
+}
+
+.card.flipped img,
+.card.matched img {
+  display: block;
+}
+
+(JavaScript)
+const allSymbols = ['🍎', '🍌', '🍇', '🍓', '🍍', '🥝', '🍉', '🍒', '🍋', '🍑', '🍐', '🍊', '🥥', '🍈', '🥭', '🫐', '🥕', '🌽'];
+let cards = [];
+let firstCard = null;
+let secondCard = null;
+let lockBoard = false;
+let moves = 0;
+let timer = null;
+let seconds = 0;
+let currentLevel = 'easy';
+let timeLimit = 120; // default 2 minutes
+
+const grid = document.getElementById('grid');
+const movesDisplay = document.getElementById('moves');
+const timerDisplay = document.getElementById('timer');
+const restartBtn = document.getElementById('restart');
+const levelSelect = document.getElementById('level');
+const startScreen = document.getElementById('start-screen');
+const gameContainer = document.querySelector('.game-container');
+const startButton = document.getElementById('start-button');
+
+function shuffle(array) {
+  return array.sort(() => 0.5 - Math.random());
+}
+
+function startTimer() {
+  stopTimer(); // para garantir que não tenha múltiplos timers rodando
+  timer = setInterval(() => {
+    seconds++;
+    if(seconds >= timeLimit) {
+      stopTimer();
+      lockBoard = true;
+      alert("⏰ Tempo esgotado! Tente novamente.");
+      return;
+    }
+    const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const secs = String(seconds % 60).padStart(2, '0');
+    timerDisplay.textContent = `${mins}:${secs}`;
+  }, 1000);
+}
+
+function stopTimer() {
+  if(timer) clearInterval(timer);
+}
+
+function resetGame() {
+  stopTimer();
+  seconds = 0;
+  timerDisplay.textContent = "00:00";
+  moves = 0;
+  movesDisplay.textContent = "0";
+  firstCard = null;
+  secondCard = null;
+  lockBoard = false;
+
+  currentLevel = levelSelect.value;
+
+  let pairCount;
+  let columns;
+
+  if (currentLevel === 'easy') {
+    pairCount = 8;
+    columns = 4;
+    timeLimit = 120; // 2 minutos
+  } else if (currentLevel === 'medium') {
+    pairCount = 12;
+    columns = 6;
+    timeLimit = 120; // 2 minutos
+  } else {
+    pairCount = 18;
+    columns = 6;
+    timeLimit = 180; // 3 minutos
+  }
+
+  grid.style.gridTemplateColumns = `repeat(${columns}, 80px)`;
+
+  const selectedSymbols = shuffle([...allSymbols]).slice(0, pairCount);
+  cards = shuffle([...selectedSymbols, ...selectedSymbols]);
+
+  grid.innerHTML = '';
+  cards.forEach(symbol => {
+    const card = document.createElement('div');
+    card.classList.add('card');
+    card.dataset.symbol = symbol;
+    card.textContent = '';
+    card.addEventListener('click', flipCard);
+    grid.appendChild(card);
+  });
+}
+
+function flipCard() {
+  if (lockBoard) return;
+  if (this.classList.contains('flipped')) return;
+
+  this.classList.add('flipped');
+  this.textContent = this.dataset.symbol;
+
+  if (!firstCard) {
+    firstCard = this;
+    if (moves === 0 && seconds === 0) startTimer();
+    return;
+  }
+
+  secondCard = this;
+  lockBoard = true;
+  moves++;
+  movesDisplay.textContent = moves;
+
+  if (firstCard.dataset.symbol === secondCard.dataset.symbol) {
+    firstCard.classList.add('matched');
+    secondCard.classList.add('matched');
+    resetFlippedCards();
+    checkWin();
+  } else {
+    setTimeout(() => {
+      firstCard.classList.remove('flipped');
+      secondCard.classList.remove('flipped');
+      firstCard.textContent = '';
+      secondCard.textContent = '';
+      resetFlippedCards();
+    }, 1000);
+  }
+}
+
+function resetFlippedCards() {
+  [firstCard, secondCard] = [null, null];
+  lockBoard = false;
+}
+
+function checkWin() {
+  const matchedCards = document.querySelectorAll('.card.matched');
+  if (matchedCards.length === cards.length) {
+    stopTimer();
+    setTimeout(() => {
+      alert(`🎉 Vitória! Você venceu em ${moves} movimentos e ${timerDisplay.textContent}.`);
+    }, 300);
+  }
+}
+
+restartBtn.addEventListener('click', () => {
+  resetGame();
+});
+
+levelSelect.addEventListener('change', () => {
+  resetGame();
+});
+
+// Função para iniciar o jogo após clicar no botão
+startButton.addEventListener('click', () => {
+  startScreen.style.display = 'none';
+  gameContainer.style.display = 'block';
+  resetGame();
+});
