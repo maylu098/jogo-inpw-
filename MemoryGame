@@ -185,7 +185,7 @@ let moves = 0;
 let timer = null;
 let seconds = 0;
 let currentLevel = 'easy';
-let timeLimit = 120; // default 2 minutes
+let timeLimit = 120; 
 
 const grid = document.getElementById('grid');
 const movesDisplay = document.getElementById('moves');
@@ -201,7 +201,7 @@ function shuffle(array) {
 }
 
 function startTimer() {
-  stopTimer(); // para garantir que não tenha múltiplos timers rodando
+  stopTimer(); 
   timer = setInterval(() => {
     seconds++;
     if(seconds >= timeLimit) {
@@ -238,15 +238,15 @@ function resetGame() {
   if (currentLevel === 'easy') {
     pairCount = 8;
     columns = 4;
-    timeLimit = 120; // 2 minutos
+    timeLimit = 120; 
   } else if (currentLevel === 'medium') {
     pairCount = 12;
     columns = 6;
-    timeLimit = 120; // 2 minutos
+    timeLimit = 120; 
   } else {
     pairCount = 18;
     columns = 6;
-    timeLimit = 180; // 3 minutos
+    timeLimit = 180; 
   }
 
   grid.style.gridTemplateColumns = `repeat(${columns}, 80px)`;
@@ -322,7 +322,7 @@ levelSelect.addEventListener('change', () => {
   resetGame();
 });
 
-// Função para iniciar o jogo após clicar no botão
+
 startButton.addEventListener('click', () => {
   startScreen.style.display = 'none';
   gameContainer.style.display = 'block';
